@@ -1,0 +1,73 @@
+{
+  // These tasks will run in order when initializing your CodeSandbox project.
+  "setupTasks": [
+    {
+      "name": "Install Dependencies",
+      "command": "npm install"
+    }
+  ],
+
+  // These tasks can be run from CodeSandbox. Running one will open a log in the app.
+  "tasks": {
+    "start": {
+      "name": "start",
+      "command": "npm run start",
+      "runAtStart": false
+    },
+    "start:watch": {
+      "name": "start:watch",
+      "command": "npm run start:watch",
+      "runAtStart": false
+    },
+    "dev": {
+      "name": "dev",
+      "command": "npm run dev",
+      "runAtStart": true
+    },
+    "clean": {
+      "name": "clean",
+      "command": "npm run clean",
+      "runAtStart": false
+    },
+    "prebuild": {
+      "name": "prebuild",
+      "command": "npm run prebuild",
+      "runAtStart": false
+    },
+    "build": {
+      "name": "build",
+      "command": "npm run build",
+      "runAtStart": false
+    },
+    "build:watch": {
+      "name": "build:watch",
+      "command": "npm run build:watch",
+      "runAtStart": false
+    },
+    "build:release": {
+      "name": "build:release",
+      "command": "npm run build:release",
+      "runAtStart": false
+    },
+    "lint": {
+      "name": "lint",
+      "command": "npm run lint",
+      "runAtStart": false
+    },
+    "test": {
+      "name": "test",
+      "command": "npm run test",
+      "runAtStart": false
+    },
+    "prettier": {
+      "name": "prettier",
+      "command": "npm run prettier",
+      "runAtStart": false
+    },
+    "test:watch": {
+      "name": "test:watch",
+      "command": "npm run test:watch",
+      "runAtStart": false
+    }
+  }
+}
