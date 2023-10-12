@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
     "target": "es2022",
-    "module": "node16",
+    "module": "NodeNext",
     "lib": ["ES2022"],
-    "moduleResolution": "node16",
+    "moduleResolution": "NodeNext",
     "rootDir": ".",
-    "outDir": "build",
+    "outDir": "dist",
+    "strict": true,
     "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "alwaysStrict": true,
@@ -15,9 +16,13 @@
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noImplicitAny": false,
-    "noImplicitThis": false,
-    "strictNullChecks": false
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "composite": true,
+    "declarationMap": true, // enables importers to jump to source
   },
   "include": ["src/**/*", "__tests__/**/*"]
 }

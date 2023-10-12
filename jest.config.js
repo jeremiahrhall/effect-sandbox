@@ -7,6 +7,7 @@ export default {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.(m)?js$': '$1',
   },
+  testPathIgnorePatterns: ['/node_modules/', '\.d\.ts$', '/build/', '/dist/'],
   testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.(m)?ts$',
   coverageDirectory: 'coverage',
   collectCoverageFrom: [

@@ -1,42 +1,89 @@
-import { Delays, greeter } from '../src/main.js';
+import { Effect, Layer, Runtime, Scope } from 'effect';
+import { Repo, RepoContext, RepoLayer, get, getAndUpdate } from '../src/repo.js';
+import { TodoListContext, acquireTodoListState } from '../src/state.js';
+import { ServiceContext, ServiceLayer } from '../src/service.js';
 
-describe('greeter function', () => {
-  const name = 'John';
-  let hello: string;
+describe('todo list system', () => {
+  describe('repo', () => {
+    it('gets state from provided todo list context', async () => {
+      const plainTodoListState = acquireTodoListState();
+      const AppRuntime = async (scope: Scope.Scope) => {
+        const runtime = await Layer.toRuntime(
+          RepoLayer.pipe(
+            Layer.use(Layer.effect(TodoListContext, plainTodoListState)),
+          ),
+        ).pipe(Effect.provideService(Scope.Scope, scope), Effect.runPromise);
+        return Runtime.runPromise(runtime);
+      };
+      const txScope = Effect.runSync(Scope.make());
+      const runtime = await AppRuntime(txScope);
+      expect(runtime).toBeTruthy();
 
-  let timeoutSpy: jest.SpyInstance;
-
-  // Act before assertions
-  beforeAll(async () => {
-    // Read more about fake timers
-    // http://facebook.github.io/jest/docs/en/timer-mocks.html#content
-    // Jest 27 now uses "modern" implementation of fake timers
-    // https://jestjs.io/blog/2021/05/25/jest-27#flipping-defaults
-    // https://github.com/facebook/jest/pull/5171
-    jest.useFakeTimers();
-    timeoutSpy = jest.spyOn(global, 'setTimeout');
-
-    const p: Promise<string> = greeter(name);
-    jest.runOnlyPendingTimers();
-    hello = await p;
+      const result = await runtime(
+        Effect.gen(function* (_) {
+          const repo = yield* _(RepoContext);
+          return yield* _(repo.get());
+        }),
+      );
+      expect(result).toBeTruthy();
+      expect(result.lists.length).toBe(0);
+    });
   });
+  describe('service', () => {
+    it('handles repo failure', async () => {
+      const plainTodoListState = acquireTodoListState();
+      let hasRun = false;
+      const AppRuntime = async (scope: Scope.Scope) => {
+        const runtime = await Layer.toRuntime(
+          ServiceLayer.pipe(
+            Layer.use(
+              Layer.effect(
+                RepoContext,
+                Effect.gen(function* (_) {
+                  const ref = yield* _(TodoListContext);
+                  return yield* _(
+                    Effect.succeed(
+                      new Repo({
+                        getAndUpdate: (cb) =>
+                          getAndUpdate(cb).pipe(Effect.provideService(TodoListContext, ref), Effect.tap(() => {
+                            if (!hasRun) {
+                              hasRun = true;
+                              return Effect.fail(new Error());
+                            }
+                            return Effect.succeed(undefined);
+                          })),
+                        get: () => get().pipe(Effect.provideService(TodoListContext, ref), Effect.tap(() => {
+                          if (!hasRun) {
+                            hasRun = true;
+                            return Effect.fail(new Error());
+                          }
+                          return Effect.succeed(undefined);
+                        })),
+                      }),
+                    ),
+                  );
+                })
+              ).pipe(
+                Layer.use(Layer.effect(TodoListContext, plainTodoListState)),
+              ),
+            ),
+          ),
+        ).pipe(Effect.provideService(Scope.Scope, scope), Effect.runPromise);
+        return Runtime.runPromise(runtime);
+      };
+      const txScope = Effect.runSync(Scope.make());
+      const runtime = await AppRuntime(txScope);
+      expect(runtime).toBeTruthy();
 
-  // Teardown (cleanup) after assertions
-  afterAll(() => {
-    timeoutSpy.mockRestore();
-  });
-
-  // Assert if setTimeout was called properly
-  it('delays the greeting by 2 seconds', () => {
-    expect(setTimeout).toHaveBeenCalledTimes(1);
-    expect(setTimeout).toHaveBeenLastCalledWith(
-      expect.any(Function),
-      Delays.Long,
-    );
-  });
-
-  // Assert greeter result
-  it('greets a user with `Hello, {name}` message', () => {
-    expect(hello).toBe(`Hello, ${name}`);
+      // TODO make it handle the failure, possibly with retry
+      const result = await runtime(
+        Effect.gen(function* (_) {
+          const service = yield* _(ServiceContext);
+          return yield* _(service.getAllLists());
+        }),
+      );
+      expect(result).toBeTruthy();
+      expect(result.length).toBe(0);
+    });
   });
 });

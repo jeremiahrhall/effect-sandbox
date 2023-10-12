@@ -1,34 +1,82 @@
-/**
- * Some predefined delay values (in milliseconds).
- */
-export enum Delays {
-  Short = 500,
-  Medium = 2000,
-  Long = 5000,
-}
+import { Effect, Exit, Layer, Runtime, Scope } from 'effect';
+import { readTodoListStateFromStorage } from './storage.js';
+import { ServiceContext, ServiceLayer } from './service.js';
+import { randomUUID } from 'crypto';
+import { TodoList } from './types.js';
+import { TodoListStateLayer } from './state.js';
+import { RepoLayer } from './repo.js';
 
-/**
- * Returns a Promise<string> that resolves after a given time.
- *
- * @param {string} name - A name.
- * @param {number=} [delay=Delays.Medium] - A number of milliseconds to delay resolution of the Promise.
- * @returns {Promise<string>}
- */
-function delayedHello(
-  name: string,
-  delay: number = Delays.Medium,
-): Promise<string> {
-  return new Promise((resolve: (value?: string) => void) =>
-    setTimeout(() => resolve(`Hello, ${name}`), delay),
+export const AppRuntime = async (scope: Scope.Scope) => {
+  const layer = ServiceLayer.pipe(Layer.use(RepoLayer.pipe(Layer.use(TodoListStateLayer))));
+  const runtime = await Layer.toRuntime(
+    layer
+  ).pipe(Effect.provideService(Scope.Scope, scope), Effect.runPromise);
+  return Runtime.runPromise(runtime);
+};
+
+const retrieveState = Effect.gen(function* (_) {
+  const service = yield* _(ServiceContext);
+  const result = yield* _(service.getAllLists());
+
+  yield* _(Effect.log(JSON.stringify(result, null, 4)));
+}).pipe(Effect.withLogSpan('main:retrieve'));
+
+const createNewList = Effect.gen(function* (_) {
+  const service = yield* _(ServiceContext);
+  return yield* _(
+    service.createNewList({
+      id: randomUUID(),
+      name: 'My Second List',
+      todos: [],
+    }),
   );
-}
+}).pipe(Effect.withLogSpan('store:create'));
 
-// Please see the comment in the .eslintrc.json file about the suppressed rule!
-// Below is an example of how to use ESLint errors suppression. You can read more
-// at https://eslint.org/docs/latest/user-guide/configuring/rules#disabling-rules
+const logStateAfterCreate = Effect.gen(function* (_) {
+  const service = yield* _(ServiceContext);
+  const result = yield* _(service.getAllLists());
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export async function greeter(name: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  // The name parameter should be of type string. Any is used only to trigger the rule.
-  return await delayedHello(name, Delays.Long);
+  yield* _(Effect.log(JSON.stringify(result, null, 4)));
+}).pipe(Effect.withLogSpan('store:create:after'));
+
+const cleanupAndLog = (newList: TodoList) => {
+  return Effect.gen(function* (_) {
+    const service = yield* _(ServiceContext);
+    yield* _(service.removeList(newList));
+    const result = yield* _(service.getAllLists());
+
+    yield* _(Effect.log(JSON.stringify(result, null, 4)));
+  }).pipe(Effect.withLogSpan('store:delete'));
+};
+
+export const main = async () => {
+  const txScope = Effect.runSync(Scope.make());
+  const run = await AppRuntime(txScope);
+  // TODO challenges:
+  // - explain the code
+  // - write a new effect that clears completed todos from a list by id (service.ts)
+  // - fix test that has failure (main.test.ts)
+  // - provide the storage functions via context (storage.ts)
+
+  await run(
+    readTodoListStateFromStorage().pipe(Effect.withLogSpan('store:init')),
+  );
+
+  await run(retrieveState);
+
+  const newList = await run(createNewList);
+
+  await run(Effect.log(JSON.stringify(newList, null, 4)));
+
+  await run(logStateAfterCreate);
+
+  await run(cleanupAndLog(newList));
+
+  await run(Scope.close(txScope, Exit.succeed(1)));
+};
+
+try {
+  void main();
+} catch (e) {
+  console.log(e);
 }

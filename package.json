@@ -1,29 +1,33 @@
 {
-  "name": "node-typescript-boilerplate",
+  "name": "effects-sandbox",
+  "private": true,
   "version": "0.0.0",
-  "description": "Minimalistic boilerplate to quick-start Node.js development in TypeScript.",
+  "description": "Effects sandbox",
   "type": "module",
   "engines": {
     "node": ">= 18.12 <19"
   },
   "devDependencies": {
-    "@types/jest": "~29.5",
-    "@types/node": "~18",
-    "@typescript-eslint/eslint-plugin": "~6.2",
-    "@typescript-eslint/parser": "~6.2",
-    "eslint": "~8.46",
-    "eslint-config-prettier": "~9.0",
-    "eslint-plugin-jest": "~27.2",
-    "jest": "~29.6",
-    "prettier": "~3.0",
-    "rimraf": "~5.0",
-    "ts-api-utils": "~1.0",
-    "ts-jest": "~29.1",
-    "typescript": "~5.1"
+    "@types/jest": "^29.5",
+    "@types/node": "^18",
+    "@typescript-eslint/eslint-plugin": "^6.7",
+    "@typescript-eslint/parser": "^6.7",
+    "concurrently": "^8.2.1",
+    "eslint": "^8.46",
+    "eslint-config-prettier": "^9.0",
+    "eslint-plugin-jest": "^27.2",
+    "jest": "^29.6",
+    "nodemon": "^3.0.1",
+    "prettier": "^3.0",
+    "rimraf": "^5.0",
+    "ts-jest": "^29.1",
+    "typescript": "^5.2.2"
   },
   "scripts": {
-    "start": "node build/src/main.js",
-    "clean": "rimraf coverage build tmp",
+    "start": "node dist/src/main.js",
+    "start:watch": "nodemon --inspect dist/index.js",
+    "dev": "concurrently -n script,compile \"npm run start:watch\" \"npm run build:watch\"",
+    "clean": "rimraf coverage dist tmp",
     "prebuild": "npm run lint",
     "build": "tsc -p tsconfig.json",
     "build:watch": "tsc -w -p tsconfig.json",
@@ -33,12 +37,21 @@
     "prettier": "prettier --config .prettierrc --write .",
     "test:watch": "jest --watch"
   },
-  "author": "Jakub Synowiec <jsynowiec@users.noreply.github.com>",
+  "author": "Jeremiah Hall <jeremiahrhall@users.noreply.github.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "tslib": "~2.6"
+    "@effect/schema": "^0.43.0",
+    "effect": "^2.0.0-next.48",
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.1",
+    "tslib": "^2.6"
   },
   "volta": {
     "node": "18.12.1"
+  },
+  "nodemonConfig": {
+    "watch": [
+      "dist"
+    ]
   }
 }
