@@ -1,10 +1,10 @@
-import { Effect, Exit, Layer, Runtime, Scope } from 'effect';
-import { readTodoListStateFromStorage } from './storage.js';
-import { ServiceContext, ServiceLayer } from './service.js';
 import { randomUUID } from 'crypto';
-import { TodoList } from './types.js';
-import { TodoListStateLayer } from './state.js';
+import { Effect, Exit, Layer, Runtime, Scope } from 'effect';
 import { RepoLayer } from './repo.js';
+import { ServiceContext, ServiceLayer } from './service.js';
+import { TodoListStateLayer } from './state.js';
+import { readTodoListStateFromStorage } from './storage.js';
+import { TodoList } from './types.js';
 
 export const AppRuntime = async (scope: Scope.Scope) => {
   const layer = ServiceLayer.pipe(Layer.use(RepoLayer.pipe(Layer.use(TodoListStateLayer))));
