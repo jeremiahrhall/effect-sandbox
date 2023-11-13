@@ -1,3 +1,9 @@
+# effect-sandbox
+
+A small repo for exploring effect.
+
+Review `src/main.ts` to get started.
+
 # node-typescript-boilerplate
 
 [![Sponsor][sponsor-badge]][sponsor]

@@ -6,6 +6,12 @@ import { TodoListStateLayer } from './state.js';
 import { readTodoListStateFromStorage } from './storage.js';
 import { TodoList } from './types.js';
 
+// TODO challenges:
+// - explain the code
+// - write a new effect that clears completed todos from a list by id (service.ts)
+// - fix test that has failure (main.test.ts)
+// - provide the storage functions via context (storage.ts)
+
 export const AppRuntime = async (scope: Scope.Scope) => {
   const layer = ServiceLayer.pipe(Layer.use(RepoLayer.pipe(Layer.use(TodoListStateLayer))));
   const runtime = await Layer.toRuntime(
@@ -52,11 +58,6 @@ const cleanupAndLog = (newList: TodoList) => {
 export const main = async () => {
   const txScope = Effect.runSync(Scope.make());
   const run = await AppRuntime(txScope);
-  // TODO challenges:
-  // - explain the code
-  // - write a new effect that clears completed todos from a list by id (service.ts)
-  // - fix test that has failure (main.test.ts)
-  // - provide the storage functions via context (storage.ts)
 
   await run(
     readTodoListStateFromStorage().pipe(Effect.withLogSpan('store:init')),
